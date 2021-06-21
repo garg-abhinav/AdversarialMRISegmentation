@@ -1,5 +1,9 @@
 import torch
 import torch.nn.functional as F
+import nibabel as nib
+import numpy as np
+import os
+import glob
 
 
 def loss(logits, labels, class_weights=[0.1, 0.3, 0.3, 0.3]):
@@ -18,7 +22,7 @@ def loss(logits, labels, class_weights=[0.1, 0.3, 0.3, 0.3]):
         class_weights = torch.tensor(class_weights).cuda()
     else:
         class_weights = torch.tensor(class_weights)
-    weight_map = F.one_hot(flat_labels.to(torch.int64), num_classes=n_class) * class_weights
+    weight_map = F.one_hot(flat_labels, num_classes=n_class) * class_weights
     weight_map = torch.sum(weight_map, dim=1)
     loss_map = F.cross_entropy(input=flat_logits, target=flat_labels)
     weighted_loss = loss_map * weight_map
@@ -61,3 +65,32 @@ def evaluation(logits, labels):
     cdice_foreground = cdice_structures[:,1:]
     cdice = torch.mean(cdice_foreground)
     return segmentation_loss, cdice
+
+
+def makefolder(folder):
+    '''
+    Helper function to make a new folder if doesn't exist
+    :param folder: path to new folder
+    :return: True if folder created, False if folder already exists
+    '''
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+        return True
+    return False
+
+def load_nii(img_path):
+
+    '''
+    Shortcut to load a nifti file
+    '''
+
+    nimg = nib.load(img_path)
+    return nimg.get_data(), nimg.affine, nimg.header
+
+def save_nii(img_path, data, affine, header):
+    '''
+    Shortcut to save a nifty file
+    '''
+
+    nimg = nib.Nifti1Image(data, affine=affine, header=header)
+    nimg.to_filename(img_path)

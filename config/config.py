@@ -9,7 +9,7 @@ target_resolution = (1.36719, 1.36719)
 nlabels = 4
 
 # Training settings
-batch_size = 10
+batch_size = 4
 lr = 0.01
 
 # Rarely changed settings
@@ -20,8 +20,8 @@ train_eval_frequency = 200
 val_eval_frequency = 100
 
 # Directory settings
-project_root = '/content/gdrive/MyDrive/acdc_segmenter'
-data_root = '/content/gdrive/MyDrive/Data/training/'
-test_data_root = '/content/gdrive/MyDrive/Data/testing/'
+project_root = '/home/abhinavgarg/adv_mri/'
+data_root = '/home/abhinavgarg/data/training/'
+test_data_root = '/home/abhinavgarg/data/testing/'
 log_root = os.path.join(project_root, 'acdc_logdir')
 preproc_folder = os.path.join(project_root, 'preproc_data')

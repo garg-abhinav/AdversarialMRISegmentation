@@ -33,6 +33,7 @@ class UNet2D(nn.Module):
     def __init__(self, nchannels=1, nlabels=4):
         super(UNet2D, self).__init__()
         self.nchannels = nchannels
+        self.nlabels = nlabels
         self.conv1_1 = Conv2DLayerBN(nchannels, 64)
         self.conv1_2 = Conv2DLayerBN(64, 64)
         self.pool1 = nn.MaxPool2d(kernel_size=2)
