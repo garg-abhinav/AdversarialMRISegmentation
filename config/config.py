@@ -13,7 +13,7 @@ batch_size = 4
 lr = 0.01
 
 # Rarely changed settings
-max_epochs = 20000
+max_epochs = 200
 lr_threshold = 0.00001  # When the gradient of the learning curve is smaller than this value the LR will
                         # be reduced
 train_eval_frequency = 200
