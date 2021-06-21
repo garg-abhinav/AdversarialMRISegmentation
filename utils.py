@@ -67,6 +67,18 @@ def evaluation(logits, labels):
     return segmentation_loss, cdice
 
 
+def get_latest_checkpoint(net, log_dir, device):
+    files = glob.glob(log_dir + '/*.pth')
+    checkpoints = []
+    for i in files:
+        checkpoints.append(int(i.split('/')[-1].split('_')[-1].split('.')[0]))
+    latest_cp = max(checkpoints)
+    file = os.path.join(log_dir, f'CP_step_{latest_cp}.pth')
+    net.load_state_dict(torch.load(file, map_location=device))
+    print(f'Model loaded from {file}')
+    return net, latest_cp
+
+
 def makefolder(folder):
     '''
     Helper function to make a new folder if doesn't exist
@@ -78,19 +90,18 @@ def makefolder(folder):
         return True
     return False
 
-def load_nii(img_path):
 
+def load_nii(img_path):
     '''
     Shortcut to load a nifti file
     '''
-
     nimg = nib.load(img_path)
     return nimg.get_data(), nimg.affine, nimg.header
+
 
 def save_nii(img_path, data, affine, header):
     '''
     Shortcut to save a nifty file
     '''
-
     nimg = nib.Nifti1Image(data, affine=affine, header=header)
     nimg.to_filename(img_path)

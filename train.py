@@ -38,8 +38,8 @@ def train_net(net, device, global_step=0):
 
     print(np.unique(labels_train), np.unique(labels_val))
 
-    train_data = acdc_data.BasicDataset(images_train, labels_train, device)
-    val_data = acdc_data.BasicDataset(images_val, labels_val, device)
+    train_data = acdc_data.BasicDataset(images_train, labels_train)
+    val_data = acdc_data.BasicDataset(images_val, labels_val)
 
     n_val = len(images_val)
     n_train = len(images_train)
@@ -114,9 +114,9 @@ def train_net(net, device, global_step=0):
             writer.add_scalar('Loss/test', val_loss, global_step)
             logging.info('Validation Dice Score: {}'.format(val_score))
             writer.add_scalar('Dice/test', val_score, global_step)
-            writer.add_images('images/image', imgs, global_step)
-            writer.add_images('images/gt', labels, global_step)
-            writer.add_images('images/pred', torch.argmax(F.softmax(logits[0], dim=1), dim=1), global_step)
+            # writer.add_images('images/image', imgs, global_step)
+            # writer.add_images('images/gt', labels, global_step)
+            # writer.add_images('images/pred', torch.argmax(F.softmax(logits[0], dim=1), dim=1), global_step)
 
             if not os.path.exists(log_dir):
                 os.mkdir(log_dir)
@@ -151,18 +151,6 @@ def val_net(net, loader, device):
     return total_loss/n_val, total_dice/n_val
 
 
-def get_latest_checkpoint(net):
-    files = glob.glob(log_dir + '/*.pth')
-    checkpoints = []
-    for i in files:
-        checkpoints.append(int(i.split('/')[-1].split('_')[-1].split('.')[0]))
-    latest_cp = max(checkpoints)
-    file = os.path.join(log_dir, f'CP_step_{latest_cp}.pth')
-    net.load_state_dict(torch.load(file, map_location=device))
-    logging.info(f'Model loaded from {file}')
-    return net, latest_cp
-
-
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
@@ -176,7 +164,8 @@ if __name__ == '__main__':
 
     global_step = 0
     if os.path.exists(log_dir):
-        net, global_step = get_latest_checkpoint(net)
+        net, global_step = utils.get_latest_checkpoint(net, log_dir, device)
+        logging.info(f'Model loaded from step {global_step}')
 
     net.to(device=device)
 
