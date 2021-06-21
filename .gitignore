@@ -127,3 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# model files and logs
+acdc_logdir/
+runs/

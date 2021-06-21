@@ -14,7 +14,6 @@ def loss(logits, labels, class_weights=[0.1, 0.3, 0.3, 0.3]):
     :param class_weights: A list of the weights for each class
     :return: weighted cross entropy loss
     '''
-
     n_class = len(class_weights)
     flat_logits = torch.reshape(logits, [-1, n_class])
     flat_labels = torch.reshape(labels, [-1,])
@@ -49,7 +48,7 @@ def dice_score_per_structure(logits, labels, epsilon=1e-10):
     return dices_per_subj
 
 
-def evaluation(logits, labels):
+def evaluation(logits, labels, criterion):
     '''
     A function for evaluating the performance of the network on a minibatch. This function returns the loss and the
     current foreground Dice score.
@@ -60,7 +59,7 @@ def evaluation(logits, labels):
     :param loss_type: Which loss should be evaluated
     :return: The loss without weight decay, the foreground dice of a minibatch
     '''
-    segmentation_loss = loss(logits, labels)
+    segmentation_loss = criterion(logits, labels)
     cdice_structures = dice_score_per_structure(logits, labels)
     cdice_foreground = cdice_structures[:,1:]
     cdice = torch.mean(cdice_foreground)

@@ -53,7 +53,9 @@ def train_net(net, device, global_step=0):
     optimizer = optim.Adam(net.parameters(), lr=exp_config.lr, weight_decay=1e-8)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=10,
                                                      threshold=exp_config.lr_threshold, verbose=True)
-    criterion = utils.loss
+    # criterion = utils.loss
+    criterion = nn.CrossEntropyLoss(weight=torch.tensor([0.1, 0.3, 0.3, 0.3], dtype=torch.float32,
+                                                        device=device, requires_grad=False))
     max_epochs = exp_config.max_epochs - global_step//math.ceil(n_train/exp_config.batch_size)
     logging.info(f'''Starting training from step {global_step}:
             Epochs:          {max_epochs}
@@ -87,14 +89,14 @@ def train_net(net, device, global_step=0):
 
                 logits = net(imgs)
                 loss = criterion(logits, labels)
-                epoch_loss += loss.item()
+                # epoch_loss += loss.item()
                 writer.add_scalar('Loss/train', loss.item(), global_step)
 
                 pbar.set_postfix(**{'loss(batch)': loss.item()})
 
                 optimizer.zero_grad()
                 loss.backward()
-                nn.utils.clip_grad_value_(net.parameters(), 0.1)
+                # nn.utils.clip_grad_value_(net.parameters(), 0.1)
                 optimizer.step()
 
                 pbar.update(imgs.shape[0])
@@ -106,7 +108,7 @@ def train_net(net, device, global_step=0):
                 writer.add_histogram('weights/' + tag, value.data.cpu().numpy(), global_step)
                 writer.add_histogram('grads/' + tag, value.grad.data.cpu().numpy(), global_step)
 
-            val_loss, val_score = val_net(net, val_loader, device)
+            val_loss, val_score = val_net(net, val_loader, device, criterion)
             scheduler.step(val_score)
 
             writer.add_scalar('learning_rate', optimizer.param_groups[0]['lr'], global_step)
@@ -128,7 +130,7 @@ def train_net(net, device, global_step=0):
     writer.close()
 
 
-def val_net(net, loader, device):
+def val_net(net, loader, device, criterion):
     n_val = len(loader)
     net.eval()
     total_loss = 0
@@ -143,7 +145,7 @@ def val_net(net, loader, device):
             with torch.no_grad():
                 logits = net(imgs)
 
-            loss, dice = utils.evaluation(logits, labels)
+            loss, dice = utils.evaluation(logits, labels, criterion)
             total_loss += loss
             total_dice += dice
             pbar.update()
