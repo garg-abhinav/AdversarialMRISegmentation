@@ -57,7 +57,7 @@ def test_net(net, device):
             ax[1, idx].imshow(np.squeeze(y))
             ax[1, idx].set_title('y')
             ax[2, idx].imshow(np.squeeze(preds))
-            ax[2, idx].set_title(f'pred (dice: {dice})')
+            ax[2, idx].set_title(f'pred (dice: {round(dice.item(), 3)})')
 
             pbar.update()
     fig.tight_layout()
