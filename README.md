@@ -1,1 +1,1 @@
-# Adversarial_MRI_Segmentation
+# Adversarial MRI Segmentation
