@@ -8,7 +8,7 @@ import h5py
 from skimage import transform
 import torch
 from torch.utils.data import Dataset
-import utils
+from src import utils
 import image_utils
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')

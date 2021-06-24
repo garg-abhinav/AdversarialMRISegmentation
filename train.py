@@ -1,6 +1,5 @@
 import logging
 import os
-import glob
 import numpy as np
 import torch
 import torch.nn as nn
@@ -9,11 +8,10 @@ from tqdm import tqdm
 import math
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader
-import torch.nn.functional as F
-import utils
-from model import UNet2D
+from src import utils
+from src.model import UNet2D
 import config.config as exp_config
-import acdc_data
+from data import acdc_data
 
 log_dir = os.path.join(exp_config.log_root, exp_config.experiment_name)
 

@@ -3,11 +3,11 @@ import numpy as np
 import torch
 from tqdm import tqdm
 from torch.utils.data import DataLoader
-import utils
-from model import UNet2D
+from src import utils
+from src.model import UNet2D
 import config.config as exp_config
 import torch.nn.functional as F
-import acdc_data
+from data import acdc_data
 import matplotlib.pyplot as plt
 
 
