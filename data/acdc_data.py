@@ -9,7 +9,7 @@ from skimage import transform
 import torch
 from torch.utils.data import Dataset
 from src import utils
-import image_utils
+from data.image_utils import normalise_image
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
 
@@ -174,7 +174,7 @@ def prepare_data(input_folder, output_file, mode, size, target_resolution, split
             img = img_dat[0].copy()
             mask = mask_dat[0].copy()
 
-            img = image_utils.normalise_image(img)
+            img = normalise_image(img)
 
             pixel_size = (img_dat[2].structarr['pixdim'][1],
                           img_dat[2].structarr['pixdim'][2],

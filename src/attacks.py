@@ -12,7 +12,7 @@ def fgsm(images, labels, model, criterion, device, attack_params=dict()):
     grad = torch.autograd.grad(cost, images, retain_graph=False, create_graph=False)[0]
 
     adv_images = images - attack_params['alpha'] * grad.sign()
-    adv_images = torch.clamp(adv_images, min=0, max=1).detach()
+    # adv_images = torch.clamp(adv_images, min=0, max=1).detach()
     return adv_images
 
 
