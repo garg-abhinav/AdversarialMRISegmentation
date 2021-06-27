@@ -49,7 +49,7 @@ def attack_net(net, device, targets=[], attacks=[]):
                                                               device=device, requires_grad=False))
     net.eval()
     for attack in attacks:
-        print(f'--------------------- Starting attack: {attack["attack"]}---------------------------')
+        print(f'--------------------- Starting attack: {attack["attack"]} ---------------------------')
         baseline_loss = 0
         baseline_dice = 0
         attack_loss = [0] * len(targets)
@@ -65,8 +65,8 @@ def attack_net(net, device, targets=[], attacks=[]):
             with torch.no_grad():
                 logits = net(imgs)
             loss, dice = utils.evaluation(logits, labels, criterion)
-            baseline_loss += loss
-            baseline_dice += dice
+            baseline_loss += loss.item()
+            baseline_dice += dice.item()
             preds = torch.argmax(F.softmax(logits, dim=1), dim=1)
             preds = preds.clone().detach().cpu().numpy()
 
@@ -97,8 +97,8 @@ def attack_net(net, device, targets=[], attacks=[]):
                 with torch.no_grad():
                     logits = net(adv_imgs)
                 loss, dice = utils.evaluation(logits, adv_labels, criterion)
-                attack_loss[idx] += loss
-                attack_dice[idx] += dice
+                attack_loss[idx] += loss.item()
+                attack_dice[idx] += dice.item()
                 adv_x = adv_imgs.clone().detach().cpu().numpy()
                 adv_y = adv_labels.clone().detach().cpu().numpy()
                 preds = torch.argmax(F.softmax(logits, dim=1), dim=1)
@@ -114,9 +114,9 @@ def attack_net(net, device, targets=[], attacks=[]):
 
             if not os.path.exists('attack_outputs'):
                 os.mkdir('attack_outputs')
-            image_output_file = f'attack_outputs/output_{attack}_{batch_idx + 1}.pdf'
+            image_output_file = f'attack_outputs/output_{attack["attack"]}_{batch_idx + 1}.jpg'
             print("Writing output to ", image_output_file)
-            plt.savefig(image_output_file, format="pdf")
+            plt.savefig(image_output_file, format="jpg")
             plt.clf()
 
         print(f'Baseline - Loss: {round(baseline_loss / n_test, 3)}, Baseline Dice: {round(baseline_dice / n_test, 3)}')
