@@ -8,7 +8,7 @@ import config.config as exp_config
 import torch.nn.functional as F
 from data import acdc_data
 import matplotlib.pyplot as plt
-from src.attacks import fgsm, ifgsm
+from src.attacks import fgsm, ifgsm, cadv
 
 
 def get_thicker_perturbation(label, scale=0.5):
@@ -70,7 +70,7 @@ def attack_net(net, device, targets=[], attacks=[]):
             preds = torch.argmax(F.softmax(logits, dim=1), dim=1)
             preds = preds.clone().detach().cpu().numpy()
 
-            fig, ax = plt.subplots(3, len(targets) + 1, figsize=(len(targets) + 1 * 3, 9))
+            fig, ax = plt.subplots(3, len(targets) + 1, figsize=((len(targets) + 1) * 3, 9))
             ax[0, 0].imshow(np.squeeze(x), cmap='gray')
             ax[0, 0].set_title('x')
             ax[1, 0].imshow(np.squeeze(y))
@@ -91,12 +91,14 @@ def attack_net(net, device, targets=[], attacks=[]):
                     adv_imgs = fgsm(imgs, adv_labels, net, criterion, device, attack['params'])
                 elif attack['attack'] == 'ifgsm':
                     adv_imgs = ifgsm(imgs, adv_labels, net, criterion, device, attack['params'])
+                elif attack['attack'] == 'cadv':
+                    adv_imgs = cadv(imgs, adv_labels, net, criterion, device, attack['params'])
                 else:
                     raise NotImplementedError(f'Attack {attack} has not been implemented yet.')
 
                 with torch.no_grad():
                     logits = net(adv_imgs)
-                loss, dice = utils.evaluation(logits, adv_labels, criterion)
+                loss, dice = utils.evaluation(logits, adv_labels, criterion, target)
                 attack_loss[idx] += loss.item()
                 attack_dice[idx] += dice.item()
                 adv_x = adv_imgs.clone().detach().cpu().numpy()
@@ -135,12 +137,31 @@ if __name__ == '__main__':
         net, _ = utils.get_latest_checkpoint(net, log_dir, device)
 
     net.to(device=device)
-    attack_params = [{
+    attack_params = [
+                    {
                         'attack': 'fgsm',
-                        'params': {'alpha': 1}
+                        'params': {'alpha': 0.1}
                      },
                      {
                          'attack': 'ifgsm',
-                         'params': {'alpha': 1, 'eps': 0.4, 'steps': 30}
-                     }]
+                         'params': {'alpha': 0.1, 'eps': 0.5, 'steps': 40}
+                     },
+                    {
+                        'attack': 'cadv',
+                        'params': {
+                            'batch_size': 1,
+                            'ab_max': 110.,
+                            'ab_quant': 10.,
+                            'l_norm': 100.,
+                            'l_cent': 50.,
+                            'mask_cent': 0.5,
+                            'hint': 50,
+                            'lr': 1e-3,
+                            'target': 0,
+                            'targeted': True,
+                            'n_clusters': 8,
+                            'k': 4,
+                            'num_iter': 700
+                        }
+                    }]
     attack_net(net=net, device=device, targets=['thicker', 'blank'], attacks=attack_params)

@@ -47,7 +47,7 @@ def dice_score_per_structure(logits, labels, epsilon=1e-10):
     return dices_per_subj
 
 
-def evaluation(logits, labels, criterion):
+def evaluation(logits, labels, criterion, target=''):
     """
     A function for evaluating the performance of the network on a minibatch. This function returns the loss and the
     current foreground Dice score.
@@ -60,8 +60,11 @@ def evaluation(logits, labels, criterion):
     """
     segmentation_loss = criterion(logits, labels)
     cdice_structures = dice_score_per_structure(logits, labels)
-    cdice_foreground = cdice_structures[:, 1:]
-    cdice = torch.mean(cdice_foreground)
+    if target == 'blank':
+        cdice = torch.mean(cdice_structures[:, 0])
+    else:
+        cdice_foreground = cdice_structures[:, 1:]
+        cdice = torch.mean(cdice_foreground)
     return segmentation_loss, cdice
 
 
