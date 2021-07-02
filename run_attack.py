@@ -8,7 +8,7 @@ import config.config as exp_config
 import torch.nn.functional as F
 from data import acdc_data
 import matplotlib.pyplot as plt
-from src.attacks import fgsm, ifgsm, cadv
+from src.attacks import fgsm, ifgsm, cadv, rice_ifgsm
 
 
 def get_thicker_perturbation(label, scale=0.5):
@@ -83,6 +83,8 @@ def attack_net(net, device, targets=[], attacks=[]):
                     adv_labels = get_thicker_perturbation(y, 1)
                 elif target == 'blank':
                     adv_labels = np.zeros_like(y)
+                elif target == 'untargeted':
+                    adv_labels = y.copy()
                 else:
                     raise NotImplementedError(f'Adv target {target} has not been implemented yet.')
                 adv_labels = torch.tensor(adv_labels, device=device, requires_grad=False)
@@ -93,6 +95,8 @@ def attack_net(net, device, targets=[], attacks=[]):
                     adv_imgs = ifgsm(imgs, adv_labels, net, criterion, device, attack['params'])
                 elif attack['attack'] == 'cadv':
                     adv_imgs = cadv(imgs, adv_labels, net, criterion, device, attack['params'])
+                elif attack['attack'] == 'rice_ifgsm':
+                    adv_imgs = rice_ifgsm(imgs, adv_labels, net, criterion, device, attack['params'])
                 else:
                     raise NotImplementedError(f'Attack {attack} has not been implemented yet.')
 
@@ -141,11 +145,11 @@ if __name__ == '__main__':
                     {
                         'attack': 'fgsm',
                         'params': {'alpha': 0.1}
-                     },
-                     {
+                    },
+                    {
                          'attack': 'ifgsm',
                          'params': {'alpha': 0.1, 'eps': 0.5, 'steps': 40}
-                     },
+                    },
                     {
                         'attack': 'cadv',
                         'params': {
@@ -163,5 +167,11 @@ if __name__ == '__main__':
                             'k': 4,
                             'num_iter': 700
                         }
-                    }]
+                    },
+                    {
+                        'attack': 'rice_ifgsm',
+                        'params': {'alpha': 0.1, 'eps': 0.5, 'steps': 40, 'b': 0.775}
+                    }
+
+    ]
     attack_net(net=net, device=device, targets=['thicker', 'blank'], attacks=attack_params)

@@ -4,6 +4,7 @@ from src.cadv.util import compute_class, forward, compute_loss, get_colorization
 from src.cadv.dataloader import im_dataset
 import config.config as exp_config
 import torch
+from scipy.stats import rice
 
 
 def fgsm(images, labels, model, criterion, device, attack_params=dict()):
@@ -91,3 +92,23 @@ def cadv(images, target, segmentation_model, criterion, device, attack_params=di
         adv_images.append(out_rgb[0])  # assuming batch_size of 1
 
     return torch.stack(adv_images)
+
+
+def rice_ifgsm(images, labels, model, criterion, device, attack_params=dict()):
+    adv_images = images.clone().detach().to(device) + torch.tensor(rice.rvs(attack_params['b'], size=images.shape),
+                                                                   device=device)
+    labels = labels.clone().detach().to(device)
+    clip_min = images - attack_params['eps']
+    clip_max = images + attack_params['eps']
+
+    for i in range(attack_params['steps']):
+        adv_images.requires_grad = True
+        logits = model(adv_images)
+        cost = criterion(logits, labels)
+
+        grad = torch.autograd.grad(cost, adv_images, retain_graph=False, create_graph=False)[0]
+
+        step_output = attack_params['alpha'] * grad.sign()
+        adv_images = torch.clamp(adv_images - step_output, min=clip_min, max=clip_max).detach()
+
+    return adv_images
