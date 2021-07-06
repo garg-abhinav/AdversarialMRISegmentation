@@ -83,8 +83,6 @@ def attack_net(net, device, targets=[], attacks=[]):
                     adv_labels = get_thicker_perturbation(y, 1)
                 elif target == 'blank':
                     adv_labels = np.zeros_like(y)
-                elif target == 'untargeted':
-                    adv_labels = y.copy()
                 else:
                     raise NotImplementedError(f'Adv target {target} has not been implemented yet.')
                 adv_labels = torch.tensor(adv_labels, device=device, requires_grad=False)
@@ -121,7 +119,7 @@ def attack_net(net, device, targets=[], attacks=[]):
             if not os.path.exists('attack_outputs'):
                 os.mkdir('attack_outputs')
             image_output_file = f'attack_outputs/output_{attack["attack"]}_{batch_idx + 1}.jpg'
-            print("Writing output to ", image_output_file)
+            print("Writing output to", image_output_file)
             plt.savefig(image_output_file, format="jpg")
             plt.clf()
 
@@ -142,35 +140,35 @@ if __name__ == '__main__':
 
     net.to(device=device)
     attack_params = [
-                    {
-                        'attack': 'fgsm',
-                        'params': {'alpha': 0.1}
-                    },
-                    {
-                         'attack': 'ifgsm',
-                         'params': {'alpha': 0.1, 'eps': 0.5, 'steps': 40}
-                    },
-                    {
-                        'attack': 'cadv',
-                        'params': {
-                            'batch_size': 1,
-                            'ab_max': 110.,
-                            'ab_quant': 10.,
-                            'l_norm': 100.,
-                            'l_cent': 50.,
-                            'mask_cent': 0.5,
-                            'hint': 50,
-                            'lr': 1e-3,
-                            'target': 0,
-                            'targeted': True,
-                            'n_clusters': 8,
-                            'k': 4,
-                            'num_iter': 700
-                        }
-                    },
+#                     {
+#                         'attack': 'fgsm',
+#                         'params': {'alpha': 0.1}
+#                     },
+#                     {
+#                          'attack': 'ifgsm',
+#                          'params': {'alpha': 0.1, 'eps': 0.5, 'steps': 40}
+#                     },
+#                     {
+#                         'attack': 'cadv',
+#                         'params': {
+#                             'batch_size': 1,
+#                             'ab_max': 110.,
+#                             'ab_quant': 10.,
+#                             'l_norm': 100.,
+#                             'l_cent': 50.,
+#                             'mask_cent': 0.5,
+#                             'hint': 50,
+#                             'lr': 1e-3,
+#                             'target': 0,
+#                             'targeted': True,
+#                             'n_clusters': 8,
+#                             'k': 4,
+#                             'num_iter': 700
+#                         }
+#                     },
                     {
                         'attack': 'rice_ifgsm',
-                        'params': {'alpha': 0.1, 'eps': 0.5, 'steps': 40, 'b': 0.775}
+                        'params': {'alpha': 0.1, 'eps': 0.5, 'steps': 40, 'b': 4.775}
                     }
 
     ]

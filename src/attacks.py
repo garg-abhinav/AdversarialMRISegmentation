@@ -4,7 +4,9 @@ from src.cadv.util import compute_class, forward, compute_loss, get_colorization
 from src.cadv.dataloader import im_dataset
 import config.config as exp_config
 import torch
-from scipy.stats import rice
+from scipy.stats import rice, entropy
+from src.utils import KL
+import numpy as np
 
 
 def fgsm(images, labels, model, criterion, device, attack_params=dict()):
@@ -95,8 +97,9 @@ def cadv(images, target, segmentation_model, criterion, device, attack_params=di
 
 
 def rice_ifgsm(images, labels, model, criterion, device, attack_params=dict()):
-    adv_images = images.clone().detach().to(device) + torch.tensor(rice.rvs(attack_params['b'], size=images.shape),
-                                                                   device=device)
+    rician_samples = torch.tensor(rice.rvs(attack_params['b'], size=images.shape),
+                                                                   device=device, dtype=torch.float32)
+    adv_images = images.clone().detach().to(device) + rician_samples
     labels = labels.clone().detach().to(device)
     clip_min = images - attack_params['eps']
     clip_max = images + attack_params['eps']
@@ -110,5 +113,12 @@ def rice_ifgsm(images, labels, model, criterion, device, attack_params=dict()):
 
         step_output = attack_params['alpha'] * grad.sign()
         adv_images = torch.clamp(adv_images - step_output, min=clip_min, max=clip_max).detach()
+    
+    added_noise = images - adv_images
+    
+    rician_samples = rician_samples.detach().cpu().numpy().reshape(-1)
+    added_noise = added_noise.cpu().numpy().reshape(-1)
+
+    print('KL divergence:', entropy(added_noise[np.where(rician_samples>0)], rician_samples[np.where(rician_samples>0)]))
 
     return adv_images

@@ -106,3 +106,13 @@ def save_nii(img_path, data, affine, header):
     '''
     nimg = nib.Nifti1Image(data, affine=affine, header=header)
     nimg.to_filename(img_path)
+    
+    
+def KL(a, b):
+    '''
+    Function to calculate KL divergence between two distributions
+    '''
+    a = np.asarray(a.reshape(-1), dtype=np.float)
+    b = np.asarray(b.reshape(-1), dtype=np.float)
+
+    return np.sum(np.where((a != 0) & (b != 0), a * np.log(a / b), 0))
