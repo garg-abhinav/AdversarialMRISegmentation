@@ -135,10 +135,11 @@ class AdvGAN_Attack:
         return loss_D_GAN.item(), loss_G_fake.item(), loss_perturb.item(), loss_adv.item()
 
     def train(self, train_dataloader, epochs, n_train):
-        writer = SummaryWriter()
+        writer = SummaryWriter(comment="advGAN")
+        print('tensorboard')
         global_step = 0
         for epoch in range(1, epochs + 1):
-            with tqdm(total=n_train, desc=f'Epoch {epoch + 1}/{epochs}', unit='img') as pbar:
+            with tqdm(total=n_train, desc=f'Epoch {epoch}/{epochs}', unit='img') as pbar:
                 if epoch == 50:
                     self.optimizer_G = torch.optim.Adam(self.netG.parameters(),
                                                         lr=0.0001)
@@ -170,11 +171,11 @@ class AdvGAN_Attack:
                                         "loss_G_fake": loss_G_fake_batch,
                                         "loss_perturb": loss_perturb_batch,
                                         "loss_adv": loss_adv_batch})
-
-                    writer.add_scalar('loss_D/train', loss_D_batch.item(), global_step)
-                    writer.add_scalar('loss_G_fake/train', loss_G_fake_batch.item(), global_step)
-                    writer.add_scalar('loss_perturb/train', loss_G_fake_batch.item(), global_step)
-                    writer.add_scalar('loss_adv/train', loss_adv_batch.item(), global_step)
+                    pbar.update(imgs.shape[0])
+                    writer.add_scalar('loss_D/train', loss_D_batch, global_step)
+                    writer.add_scalar('loss_G_fake/train', loss_G_fake_batch, global_step)
+                    writer.add_scalar('loss_perturb/train', loss_G_fake_batch, global_step)
+                    writer.add_scalar('loss_adv/train', loss_adv_batch, global_step)
                     global_step += 1
                 writer.add_scalar('learning_rate', self.optimizer_G.param_groups[0]['lr'], global_step)
 
@@ -191,3 +192,4 @@ class AdvGAN_Attack:
                     torch.save(self.netG.state_dict(), netG_file_name)
         netG_file_name = os.path.join(log_dir, 'netG_epoch_' + str(epoch) + '.pth')
         torch.save(self.netG.state_dict(), netG_file_name)
+        writer.close()
