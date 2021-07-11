@@ -5,6 +5,8 @@ import models
 import torch.nn.functional as F
 import torchvision
 import numpy as np
+from torch.utils.tensorboard import SummaryWriter
+from tqdm import tqdm
 from scipy.stats import rice
 import os
 
@@ -132,44 +134,60 @@ class AdvGAN_Attack:
 
         return loss_D_GAN.item(), loss_G_fake.item(), loss_perturb.item(), loss_adv.item()
 
-    def train(self, train_dataloader, epochs):
+    def train(self, train_dataloader, epochs, n_train):
+        writer = SummaryWriter()
+        global_step = 0
         for epoch in range(1, epochs + 1):
+            with tqdm(total=n_train, desc=f'Epoch {epoch + 1}/{epochs}', unit='img') as pbar:
+                if epoch == 50:
+                    self.optimizer_G = torch.optim.Adam(self.netG.parameters(),
+                                                        lr=0.0001)
+                    self.optimizer_D = torch.optim.Adam(self.netDisc.parameters(),
+                                                        lr=0.0001)
+                if epoch == 80:
+                    self.optimizer_G = torch.optim.Adam(self.netG.parameters(),
+                                                        lr=0.00001)
+                    self.optimizer_D = torch.optim.Adam(self.netDisc.parameters(),
+                                                        lr=0.00001)
+                loss_D_sum = 0
+                loss_G_fake_sum = 0
+                loss_perturb_sum = 0
+                loss_adv_sum = 0
+                for i, data in enumerate(train_dataloader):
+                    labels = data['label']
+                    imgs = torch.reshape(data['image'], [data['label'].shape[0]] + [1] + list(exp_config.image_size))
 
-            if epoch == 50:
-                self.optimizer_G = torch.optim.Adam(self.netG.parameters(),
-                                                    lr=0.0001)
-                self.optimizer_D = torch.optim.Adam(self.netDisc.parameters(),
-                                                    lr=0.0001)
-            if epoch == 80:
-                self.optimizer_G = torch.optim.Adam(self.netG.parameters(),
-                                                    lr=0.00001)
-                self.optimizer_D = torch.optim.Adam(self.netDisc.parameters(),
-                                                    lr=0.00001)
-            loss_D_sum = 0
-            loss_G_fake_sum = 0
-            loss_perturb_sum = 0
-            loss_adv_sum = 0
-            for i, data in enumerate(train_dataloader):
-                labels = data['label']
-                imgs = torch.reshape(data['image'], [data['label'].shape[0]] + [1] + list(exp_config.image_size))
+                    imgs = imgs.to(device=self.device, dtype=torch.float32)
+                    labels = labels.to(device=self.device, dtype=torch.long)
+                    loss_D_batch, loss_G_fake_batch, loss_perturb_batch, loss_adv_batch = \
+                        self.train_batch(imgs, labels)
+                    loss_D_sum += loss_D_batch
+                    loss_G_fake_sum += loss_G_fake_batch
+                    loss_perturb_sum += loss_perturb_batch
+                    loss_adv_sum += loss_adv_batch
 
-                imgs = imgs.to(device=self.device, dtype=torch.float32)
-                labels = labels.to(device=self.device, dtype=torch.long)
-                loss_D_batch, loss_G_fake_batch, loss_perturb_batch, loss_adv_batch = \
-                    self.train_batch(imgs, labels)
-                loss_D_sum += loss_D_batch
-                loss_G_fake_sum += loss_G_fake_batch
-                loss_perturb_sum += loss_perturb_batch
-                loss_adv_sum += loss_adv_batch
+                    pbar.set_postfix(**{"loss_D": loss_D_batch,
+                                        "loss_G_fake": loss_G_fake_batch,
+                                        "loss_perturb": loss_perturb_batch,
+                                        "loss_adv": loss_adv_batch})
 
-            # print statistics
-            num_batch = len(train_dataloader)
-            print("epoch %d:\nloss_D: %.3f, loss_G_fake: %.3f,\
-             \nloss_perturb: %.3f, loss_adv: %.3f, \n" %
-                  (epoch, loss_D_sum / num_batch, loss_G_fake_sum / num_batch,
-                   loss_perturb_sum / num_batch, loss_adv_sum / num_batch))
+                    writer.add_scalar('loss_D/train', loss_D_batch.item(), global_step)
+                    writer.add_scalar('loss_G_fake/train', loss_G_fake_batch.item(), global_step)
+                    writer.add_scalar('loss_perturb/train', loss_G_fake_batch.item(), global_step)
+                    writer.add_scalar('loss_adv/train', loss_adv_batch.item(), global_step)
+                    global_step += 1
+                writer.add_scalar('learning_rate', self.optimizer_G.param_groups[0]['lr'], global_step)
 
-            # save generator
-            if epoch % 10 == 0:
-                netG_file_name = os.path.join(log_dir, 'netG_epoch_' + str(epoch) + '.pth')
-                torch.save(self.netG.state_dict(), netG_file_name)
+                # print statistics
+
+                # print("epoch %d:\nloss_D: %.3f, loss_G_fake: %.3f,\
+                #  \nloss_perturb: %.3f, loss_adv: %.3f, \n" %
+                #       (epoch, loss_D_sum / num_batch, loss_G_fake_sum / num_batch,
+                #        loss_perturb_sum / num_batch, loss_adv_sum / num_batch))
+
+                # save generator
+                if epoch % 10 == 0:
+                    netG_file_name = os.path.join(log_dir, 'netG_epoch_' + str(epoch) + '.pth')
+                    torch.save(self.netG.state_dict(), netG_file_name)
+        netG_file_name = os.path.join(log_dir, 'netG_epoch_' + str(epoch) + '.pth')
+        torch.save(self.netG.state_dict(), netG_file_name)

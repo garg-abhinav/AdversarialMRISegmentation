@@ -78,4 +78,4 @@ advGAN = AdvGAN_Attack(device,
                        criterion,
                        b)
 
-advGAN.train(train_loader, epochs)
+advGAN.train(train_loader, epochs, n_train)
