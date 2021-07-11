@@ -116,3 +116,19 @@ def KL(a, b):
     b = np.asarray(b.reshape(-1), dtype=np.float)
 
     return np.sum(np.where((a != 0) & (b != 0), a * np.log(a / b), 0))
+
+
+def get_thicker_perturbation(label, scale=0.5):
+    perturbed_y = np.squeeze(label).copy()
+    rows_with_3 = sorted(list(set(np.where(perturbed_y == 3)[0])))
+    for row in rows_with_3:
+        y = perturbed_y[row]
+        all_3 = np.where(y == 3)[0]
+        value, counts = np.unique(y[:all_3[0]], return_counts=True)
+        y[all_3[0]: min(all_3[0] + int(counts[np.where(value == 2)][0] * scale), all_3[-1] + 1)] = 2
+
+        all_3 = np.where(y == 3)[0]
+        if len(all_3) != 0:
+            value, counts = np.unique(y[all_3[-1]:], return_counts=True)
+            y[max(all_3[-1] - int(counts[np.where(value == 2)][0] * scale) + 1, all_3[0]):all_3[-1] + 1] = 2
+    return perturbed_y[np.newaxis, :]

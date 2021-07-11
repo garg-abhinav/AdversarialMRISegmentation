@@ -11,22 +11,6 @@ import matplotlib.pyplot as plt
 from src.attacks import fgsm, ifgsm, cadv, rician_ifgsm
 
 
-def get_thicker_perturbation(label, scale=0.5):
-    perturbed_y = np.squeeze(label).copy()
-    rows_with_3 = sorted(list(set(np.where(perturbed_y == 3)[0])))
-    for row in rows_with_3:
-        y = perturbed_y[row]
-        all_3 = np.where(y == 3)[0]
-        value, counts = np.unique(y[:all_3[0]], return_counts=True)
-        y[all_3[0]: min(all_3[0] + int(counts[np.where(value == 2)][0] * scale), all_3[-1] + 1)] = 2
-
-        all_3 = np.where(y == 3)[0]
-        if len(all_3) != 0:
-            value, counts = np.unique(y[all_3[-1]:], return_counts=True)
-            y[max(all_3[-1] - int(counts[np.where(value == 2)][0] * scale) + 1, all_3[0]):all_3[-1] + 1] = 2
-    return perturbed_y[np.newaxis, :]
-
-
 def attack_net(net, device, targets=[], attacks=[]):
     data = acdc_data.load_and_maybe_process_data(
         input_folder=exp_config.data_root,
@@ -80,7 +64,7 @@ def attack_net(net, device, targets=[], attacks=[]):
 
             for idx, target in enumerate(targets):
                 if target == 'thicker':
-                    adv_labels = get_thicker_perturbation(y, 1)
+                    adv_labels = utils.get_thicker_perturbation(y, 1)
                 elif target == 'blank':
                     adv_labels = np.zeros_like(y)
                 else:

@@ -21,22 +21,6 @@ def weights_init(m):
         nn.init.constant_(m.bias.data, 0)
 
 
-def get_thicker_perturbation(label, scale=0.5):
-    perturbed_y = np.squeeze(label).copy()
-    rows_with_3 = sorted(list(set(np.where(perturbed_y == 3)[0])))
-    for row in rows_with_3:
-        y = perturbed_y[row]
-        all_3 = np.where(y == 3)[0]
-        value, counts = np.unique(y[:all_3[0]], return_counts=True)
-        y[all_3[0]: min(all_3[0] + int(counts[np.where(value == 2)][0] * scale), all_3[-1] + 1)] = 2
-
-        all_3 = np.where(y == 3)[0]
-        if len(all_3) != 0:
-            value, counts = np.unique(y[all_3[-1]:], return_counts=True)
-            y[max(all_3[-1] - int(counts[np.where(value == 2)][0] * scale) + 1, all_3[0]):all_3[-1] + 1] = 2
-    return perturbed_y[np.newaxis, :]
-
-
 class AdvGAN_Attack:
     def __init__(self,
                  device,
@@ -165,12 +149,14 @@ class AdvGAN_Attack:
             loss_G_fake_sum = 0
             loss_perturb_sum = 0
             loss_adv_sum = 0
-            for i, data in enumerate(train_dataloader, start=0):
+            for i, data in enumerate(train_dataloader):
                 labels = data['label']
                 imgs = torch.reshape(data['image'], [data['label'].shape[0]] + [1] + list(exp_config.image_size))
-                adv_labels = get_thicker_perturbation(labels.clone().detach().cpu().numpy(), 1)
+
+                imgs = imgs.to(device=self.device, dtype=torch.float32)
+                labels = labels.to(device=self.device, dtype=torch.long)
                 loss_D_batch, loss_G_fake_batch, loss_perturb_batch, loss_adv_batch = \
-                    self.train_batch(imgs, adv_labels)
+                    self.train_batch(imgs, labels)
                 loss_D_sum += loss_D_batch
                 loss_G_fake_sum += loss_G_fake_batch
                 loss_perturb_sum += loss_perturb_batch

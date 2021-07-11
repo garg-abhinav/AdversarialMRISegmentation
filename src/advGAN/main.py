@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import torchvision.datasets
 import torchvision.transforms as transforms
@@ -9,6 +10,7 @@ from src.model import UNet2D
 import config.config as exp_config
 import os
 from data import acdc_data
+from src import utils
 
 use_cuda = True
 image_nc = 1
@@ -53,10 +55,15 @@ labels_train = data['masks_train']
 images_val = data['images_test']
 labels_val = data['masks_test']
 
-train_data = acdc_data.BasicDataset(images_train, labels_train)
-val_data = acdc_data.BasicDataset(images_val, labels_val)
+adv_labels_train = []
+for label in labels_train:
+    adv_labels_train.append(utils.get_thicker_perturbation(label, 1))
+adv_labels_train = np.array(adv_labels_train)
 
-n_val = len(images_val)
+train_data = acdc_data.BasicDataset(images_train, adv_labels_train)
+# val_data = acdc_data.BasicDataset(images_val, labels_val)
+
+# n_val = len(images_val)
 n_train = len(images_train)
 
 train_loader = DataLoader(train_data, batch_size=exp_config.batch_size, shuffle=True, num_workers=8, pin_memory=True)
