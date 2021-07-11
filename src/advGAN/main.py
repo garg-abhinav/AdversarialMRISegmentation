@@ -59,7 +59,8 @@ adv_labels_train = []
 for label in labels_train:
     adv_labels_train.append(utils.get_thicker_perturbation(label, 1))
 adv_labels_train = np.array(adv_labels_train)
-
+adv_labels_train = np.squeeze(adv_labels_train)
+print(adv_labels_train.shape)
 train_data = acdc_data.BasicDataset(images_train, adv_labels_train)
 # val_data = acdc_data.BasicDataset(images_val, labels_val)
 

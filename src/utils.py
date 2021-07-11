@@ -125,7 +125,11 @@ def get_thicker_perturbation(label, scale=0.5):
         y = perturbed_y[row]
         all_3 = np.where(y == 3)[0]
         value, counts = np.unique(y[:all_3[0]], return_counts=True)
-        y[all_3[0]: min(all_3[0] + int(counts[np.where(value == 2)][0] * scale), all_3[-1] + 1)] = 2
+        try:
+            y[all_3[0]: min(all_3[0] + int(counts[np.where(value == 2)][0] * scale), all_3[-1] + 1)] = 2
+        except IndexError:
+            print('skipped')
+            pass
 
         all_3 = np.where(y == 3)[0]
         if len(all_3) != 0:
