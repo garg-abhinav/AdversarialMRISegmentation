@@ -6,6 +6,7 @@ import config.config as exp_config
 import torch
 import torch.nn.functional as F
 from scipy.stats import rice, entropy
+from src.advGAN.models import Generator
 from src.utils import KL
 import numpy as np
 
@@ -132,4 +133,19 @@ def rician_ifgsm(images, labels, model, criterion, device, attack_params=dict())
         adv_perturbation = adv_perturbation - attack_params['lr'] * grad
         adv_images = torch.clamp(adv_images - adv_perturbation, min=clip_min, max=clip_max).detach()
 
+    return adv_images
+
+
+def rician_advGAN(images, labels, model, criterion, device, attack_params=dict()):
+    netG = Generator(images.shape[1], images.shape[1])
+    netG.load_state_dict(torch.load(os.path.join(exp_config.log_root, 'netG_epoch_100.pth')))
+    netG = netG.to(device)
+
+    adv_images = images.clone().detach().to(device)
+    labels = labels.clone().detach().to(device)
+    clip_min = images - attack_params['eps']
+    clip_max = images + attack_params['eps']
+
+    perturbation = netG(adv_images)
+    adv_images = torch.clamp(adv_images + perturbation, min=clip_min, max=clip_max).detach()
     return adv_images

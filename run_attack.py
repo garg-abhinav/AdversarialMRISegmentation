@@ -79,6 +79,8 @@ def attack_net(net, device, targets=[], attacks=[]):
                     adv_imgs = cadv(imgs, adv_labels, net, criterion, device, attack['params'])
                 elif attack['attack'] == 'rician_ifgsm':
                     adv_imgs = rician_ifgsm(imgs, adv_labels, net, criterion, device, attack['params'])
+                elif attack['attack'] == 'rician_advGAN':
+                    adv_imgs = rician_ifgsm(imgs, adv_labels, net, criterion, device, attack['params'])
                 else:
                     raise NotImplementedError(f'Attack {attack} has not been implemented yet.')
 
@@ -124,36 +126,40 @@ if __name__ == '__main__':
 
     net.to(device=device)
     attack_params = [
-#                     {
-#                         'attack': 'fgsm',
-#                         'params': {'alpha': 0.1}
-#                     },
-#                     {
-#                          'attack': 'ifgsm',
-#                          'params': {'alpha': 0.1, 'eps': 0.5, 'steps': 40}
-#                     },
-#                     {
-#                         'attack': 'cadv',
-#                         'params': {
-#                             'batch_size': 1,
-#                             'ab_max': 110.,
-#                             'ab_quant': 10.,
-#                             'l_norm': 100.,
-#                             'l_cent': 50.,
-#                             'mask_cent': 0.5,
-#                             'hint': 50,
-#                             'lr': 1e-3,
-#                             'target': 0,
-#                             'targeted': True,
-#                             'n_clusters': 8,
-#                             'k': 4,
-#                             'num_iter': 700
-#                         }
-#                     },
-                    {
-                        'attack': 'rician_ifgsm',
-                        'params': {'alpha': 0.1, 'eps': 0.5, 'steps': 40, 'lr': 0.01, 'b': 4.775, 'criterion': 'MSE'}
-                    }
+                    # {
+                    #     'attack': 'fgsm',
+                    #     'params': {'alpha': 0.1}
+                    # },
+                    # {
+                    #      'attack': 'ifgsm',
+                    #      'params': {'alpha': 0.1, 'eps': 0.5, 'steps': 40}
+                    # },
+                    # {
+                    #     'attack': 'cadv',
+                    #     'params': {
+                    #         'batch_size': 1,
+                    #         'ab_max': 110.,
+                    #         'ab_quant': 10.,
+                    #         'l_norm': 100.,
+                    #         'l_cent': 50.,
+                    #         'mask_cent': 0.5,
+                    #         'hint': 50,
+                    #         'lr': 1e-3,
+                    #         'target': 0,
+                    #         'targeted': True,
+                    #         'n_clusters': 8,
+                    #         'k': 4,
+                    #         'num_iter': 700
+                    #     }
+                    # },
+                    # {
+                    #     'attack': 'rician_ifgsm',
+                    #     'params': {'alpha': 0.1, 'eps': 0.5, 'steps': 40, 'lr': 0.01, 'b': 4.775, 'criterion': 'MSE'}
+                    # },
+                      {
+                          'attack': 'rician_advGAN',
+                          'params': {'eps': 0.5}
+                      }
 
     ]
     attack_net(net=net, device=device, targets=['thicker', 'blank'], attacks=attack_params)
