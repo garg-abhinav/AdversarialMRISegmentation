@@ -8,7 +8,7 @@ import config.config as exp_config
 import torch.nn.functional as F
 from data import acdc_data
 import matplotlib.pyplot as plt
-from src.attacks import fgsm, ifgsm, cadv, rice_ifgsm
+from src.attacks import fgsm, ifgsm, cadv, rician_ifgsm
 
 
 def get_thicker_perturbation(label, scale=0.5):
@@ -93,8 +93,8 @@ def attack_net(net, device, targets=[], attacks=[]):
                     adv_imgs = ifgsm(imgs, adv_labels, net, criterion, device, attack['params'])
                 elif attack['attack'] == 'cadv':
                     adv_imgs = cadv(imgs, adv_labels, net, criterion, device, attack['params'])
-                elif attack['attack'] == 'rice_ifgsm':
-                    adv_imgs = rice_ifgsm(imgs, adv_labels, net, criterion, device, attack['params'])
+                elif attack['attack'] == 'rician_ifgsm':
+                    adv_imgs = rician_ifgsm(imgs, adv_labels, net, criterion, device, attack['params'])
                 else:
                     raise NotImplementedError(f'Attack {attack} has not been implemented yet.')
 
@@ -167,8 +167,8 @@ if __name__ == '__main__':
 #                         }
 #                     },
                     {
-                        'attack': 'rice_ifgsm',
-                        'params': {'alpha': 0.1, 'eps': 0.5, 'steps': 40, 'b': 4.775}
+                        'attack': 'rician_ifgsm',
+                        'params': {'alpha': 0.1, 'eps': 0.5, 'steps': 40, 'lr': 0.01, 'b': 4.775, 'criterion': 'MSE'}
                     }
 
     ]

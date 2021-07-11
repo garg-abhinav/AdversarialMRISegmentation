@@ -4,6 +4,7 @@ from src.cadv.util import compute_class, forward, compute_loss, get_colorization
 from src.cadv.dataloader import im_dataset
 import config.config as exp_config
 import torch
+import torch.nn.functional as F
 from scipy.stats import rice, entropy
 from src.utils import KL
 import numpy as np
@@ -96,29 +97,39 @@ def cadv(images, target, segmentation_model, criterion, device, attack_params=di
     return torch.stack(adv_images)
 
 
-def rice_ifgsm(images, labels, model, criterion, device, attack_params=dict()):
+def rician_ifgsm(images, labels, model, criterion, device, attack_params=dict()):
     rician_samples = torch.tensor(rice.rvs(attack_params['b'], size=images.shape),
-                                                                   device=device, dtype=torch.float32)
-    adv_images = images.clone().detach().to(device) + rician_samples
+                                  device=device, dtype=torch.float32)
+    adv_images = images.clone().detach().to(device)
     labels = labels.clone().detach().to(device)
     clip_min = images - attack_params['eps']
     clip_max = images + attack_params['eps']
+    
+    if attack_params['criterion'] == 'KLDiv':
+        rician_criterion = torch.nn.KLDivLoss()
+    else:
+        rician_criterion = torch.nn.MSELoss()  
 
     for i in range(attack_params['steps']):
         adv_images.requires_grad = True
         logits = model(adv_images)
         cost = criterion(logits, labels)
-
         grad = torch.autograd.grad(cost, adv_images, retain_graph=False, create_graph=False)[0]
-
-        step_output = attack_params['alpha'] * grad.sign()
-        adv_images = torch.clamp(adv_images - step_output, min=clip_min, max=clip_max).detach()
-    
-    added_noise = images - adv_images
-    
-    rician_samples = rician_samples.detach().cpu().numpy().reshape(-1)
-    added_noise = added_noise.cpu().numpy().reshape(-1)
-
-    print('KL divergence:', entropy(added_noise[np.where(rician_samples>0)], rician_samples[np.where(rician_samples>0)]))
+        adv_perturbation = attack_params['alpha'] * grad.sign()
+        adv_perturbation.requires_grad = True
+        
+        if attack_params['criterion'] == 'KLDiv':
+            cost = rician_criterion(F.log_softmax(adv_perturbation, dim=1),
+                                    F.softmax(rician_samples, dim=1))
+        else:
+            cost = rician_criterion(adv_perturbation, rician_samples)
+            
+        grad = torch.autograd.grad(cost, adv_perturbation, retain_graph=False, create_graph=False)[0]
+        
+        if (i + 1) % 10 == 0 or i == 0:
+            print(f'[{i + 1}/{attack_params["steps"]}] Loss: {cost:.3f}')
+            
+        adv_perturbation = adv_perturbation - attack_params['lr'] * grad
+        adv_images = torch.clamp(adv_images - adv_perturbation, min=clip_min, max=clip_max).detach()
 
     return adv_images
