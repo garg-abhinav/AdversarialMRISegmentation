@@ -74,20 +74,20 @@ class AdvGAN_Attack:
 
             # add a clipping trick
             # not sure to include this or not?
-            perturbation = torch.clamp(perturbation, -0.3, 0.3)
+            # perturbation = torch.clamp(perturbation, -0.3, 0.3)
             adv_images = perturbation + x
-            adv_images = torch.clamp(adv_images, self.box_min, self.box_max)
+            # adv_images = torch.clamp(adv_images, self.box_min, self.box_max)
 
             self.optimizer_D.zero_grad()
             rician_noise = self.get_rician_samples(perturbation.shape)
             pred_real = self.netDisc(rician_noise)
-            # loss_D_real = F.mse_loss(pred_real, torch.ones_like(pred_real, device=self.device))
-            loss_D_real = self.BCELoss(pred_real, torch.ones_like(pred_real, device=self.device))
+            loss_D_real = F.mse_loss(pred_real, torch.ones_like(pred_real, device=self.device))
+#             loss_D_real = self.BCELoss(pred_real, torch.ones_like(pred_real, device=self.device))
             loss_D_real.backward()
 
             pred_fake = self.netDisc(perturbation.detach())
-            # loss_D_fake = F.mse_loss(pred_fake, torch.zeros_like(pred_fake, device=self.device))
-            loss_D_fake = self.BCELoss(pred_fake, torch.zeros_like(pred_fake, device=self.device))
+            loss_D_fake = F.mse_loss(pred_fake, torch.zeros_like(pred_fake, device=self.device))
+#             loss_D_fake = self.BCELoss(pred_fake, torch.zeros_like(pred_fake, device=self.device))
             loss_D_fake.backward()
             loss_D_GAN = loss_D_fake + loss_D_real
             self.optimizer_D.step()
@@ -98,8 +98,8 @@ class AdvGAN_Attack:
 
             # cal G's loss in GAN
             pred_fake = self.netDisc(perturbation.detach())
-            # loss_G_fake = F.mse_loss(pred_fake, torch.ones_like(pred_fake, device=self.device))
-            loss_G_fake = self.BCELoss(pred_fake, torch.ones_like(pred_fake, device=self.device))
+            loss_G_fake = F.mse_loss(pred_fake, torch.ones_like(pred_fake, device=self.device))
+#             loss_G_fake = self.BCELoss(pred_fake, torch.ones_like(pred_fake, device=self.device))
             loss_G_fake.backward(retain_graph=True)
 
             # calculate perturbation norm
@@ -174,7 +174,7 @@ class AdvGAN_Attack:
                     pbar.update(imgs.shape[0])
                     writer.add_scalar('loss_D/train', loss_D_batch, global_step)
                     writer.add_scalar('loss_G_fake/train', loss_G_fake_batch, global_step)
-                    writer.add_scalar('loss_perturb/train', loss_G_fake_batch, global_step)
+                    writer.add_scalar('loss_perturb/train', loss_perturb_batch, global_step)
                     writer.add_scalar('loss_adv/train', loss_adv_batch, global_step)
                     global_step += 1
                 writer.add_scalar('learning_rate', self.optimizer_G.param_groups[0]['lr'], global_step)
@@ -188,8 +188,8 @@ class AdvGAN_Attack:
 
                 # save generator
                 if epoch % 10 == 0:
-                    netG_file_name = os.path.join(log_dir, 'netG_epoch_' + str(epoch) + '.pth')
+                    netG_file_name = os.path.join(log_dir, 'netG_wo_clip_mse_epoch_' + str(epoch) + '.pth')
                     torch.save(self.netG.state_dict(), netG_file_name)
-        netG_file_name = os.path.join(log_dir, 'netG_epoch_' + str(epoch) + '.pth')
+        netG_file_name = os.path.join(log_dir, 'netG_wo_clip_mse_epoch_' + str(epoch) + '.pth')
         torch.save(self.netG.state_dict(), netG_file_name)
         writer.close()

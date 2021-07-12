@@ -8,7 +8,7 @@ import config.config as exp_config
 import torch.nn.functional as F
 from data import acdc_data
 import matplotlib.pyplot as plt
-from src.attacks import fgsm, ifgsm, cadv, rician_ifgsm
+from src.attacks import fgsm, ifgsm, cadv, rician_ifgsm, rician_advGAN
 
 
 def attack_net(net, device, targets=[], attacks=[]):
@@ -80,7 +80,7 @@ def attack_net(net, device, targets=[], attacks=[]):
                 elif attack['attack'] == 'rician_ifgsm':
                     adv_imgs = rician_ifgsm(imgs, adv_labels, net, criterion, device, attack['params'])
                 elif attack['attack'] == 'rician_advGAN':
-                    adv_imgs = rician_ifgsm(imgs, adv_labels, net, criterion, device, attack['params'])
+                    adv_imgs = rician_advGAN(imgs, adv_labels, net, criterion, device, attack['params'])
                 else:
                     raise NotImplementedError(f'Attack {attack} has not been implemented yet.')
 
@@ -111,7 +111,7 @@ def attack_net(net, device, targets=[], attacks=[]):
 
         print(f'Baseline - Loss: {round(baseline_loss / n_test, 3)}, Baseline Dice: {round(baseline_dice / n_test, 3)}')
         for i in range(len(targets)):
-            print(f'Adv Target - {targets[i]} Loss: {round(attack_loss[i] / n_test, 3)}, '
+            print(f'Adv Target - {targets[i]}, Loss: {round(attack_loss[i] / n_test, 3)}, '
                   f'Dice: {round(attack_dice[i] / n_test, 3)}')
 
 
@@ -130,10 +130,10 @@ if __name__ == '__main__':
                     #     'attack': 'fgsm',
                     #     'params': {'alpha': 0.1}
                     # },
-                    # {
-                    #      'attack': 'ifgsm',
-                    #      'params': {'alpha': 0.1, 'eps': 0.5, 'steps': 40}
-                    # },
+#                     {
+#                          'attack': 'ifgsm',
+#                          'params': {'alpha': 0.1, 'eps': 0.5, 'steps': 40}
+#                     },
                     # {
                     #     'attack': 'cadv',
                     #     'params': {
