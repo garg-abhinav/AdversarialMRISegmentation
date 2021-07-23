@@ -139,7 +139,7 @@ def rician_ifgsm(images, labels, model, criterion, device, attack_params=dict())
 def rician_advGAN(images, labels, model, criterion, device, attack_params=dict()):
     netG = Generator(images.shape[1], images.shape[1])
     netG.load_state_dict(torch.load(os.path.join(os.path.join(exp_config.log_root, exp_config.experiment_name),
-                                                 'netG_wo_clip_mse_epoch_100.pth')))
+                                                 'netG_base_epoch_100.pth')))
     netG = netG.to(device)
 
 #     adv_images = images.clone().detach().to(device)

@@ -45,6 +45,11 @@ class Discriminator(nn.Module):
             nn.Conv2d(16, 32, kernel_size=4, stride=2, padding=0, bias=True),
             nn.BatchNorm2d(32),
             nn.LeakyReLU(0.2),
+#              # 32
+#             nn.Conv2d(32, 64, kernel_size=4, stride=2, padding=0, bias=True),
+#             nn.BatchNorm2d(64),
+#             nn.LeakyReLU(0.2),
+            # 64
             nn.Conv2d(32, 1, 1),
             nn.Sigmoid()
             # 32*1*1
@@ -77,6 +82,14 @@ class Generator(nn.Module):
             nn.InstanceNorm2d(32),
             nn.ReLU(),
             # 32*5*5
+#             nn.Conv2d(32, 64, kernel_size=3, stride=2, padding=0, bias=True),
+#             nn.InstanceNorm2d(64),
+#             nn.ReLU(),
+#             # 16*12*12
+#             nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=0, bias=True),
+#             nn.InstanceNorm2d(128),
+#             nn.ReLU(),
+            # 32*5*5
         ]
 
         bottle_neck_lis = [ResnetBlock(32),
@@ -85,6 +98,13 @@ class Generator(nn.Module):
                            ResnetBlock(32)]
 
         decoder_lis = [
+#             nn.ConvTranspose2d(128, 64, kernel_size=3, stride=2, padding=0, bias=False),
+#             nn.InstanceNorm2d(64),
+#             nn.ReLU(),
+#             # state size. 16 x 11 x 11
+#             nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=0, bias=False),
+#             nn.InstanceNorm2d(32),
+#             nn.ReLU(),
             nn.ConvTranspose2d(32, 16, kernel_size=3, stride=2, padding=0, bias=False),
             nn.InstanceNorm2d(16),
             nn.ReLU(),
